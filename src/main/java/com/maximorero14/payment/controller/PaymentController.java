@@ -37,13 +37,13 @@ public class PaymentController {
 		try {
 			RestClientResponse<FraudCheckResponse> response = restClient.post(
 					metricName,
-					fraudServiceUrl,
+					fraudServiceUrl+"/fraud/check",
 					paymentRequest,
 					Map.of("Content-Type", "application/json"),
 					FraudCheckResponse.class
 			);
 
-			if (response.isSuccess()) {
+			if (!response.isHttpError()) {
 				FraudCheckResponse fraudCheckResponse = response.getBody();
 
 				if(fraudCheckResponse.isFraud()){

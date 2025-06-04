@@ -84,17 +84,13 @@ public class EnhancedRestClient {
                 try {
                     T parsedBody = objectMapper.readValue(rawResponse.getBody(), responseType);
                     clientResponse.setBody(parsedBody);
-                    clientResponse.setSuccess(true);
                 } catch (JsonProcessingException e) {
                     log.warn("Failed to parse response body to {}: {}", responseType.getSimpleName(), e.getMessage());
                     // Keep the raw response but mark as parsing error
                     clientResponse.setRawBody(rawResponse.getBody());
-                    clientResponse.setSuccess(false);
                     clientResponse.setParsingError(true);
                     errorMessage = "Failed to parse response: " + e.getMessage();
                 }
-            } else {
-                clientResponse.setSuccess(true); // Empty body is OK for some operations
             }
 
             clientResponse.setStatusCode(rawResponse.getStatusCode());
@@ -104,7 +100,6 @@ public class EnhancedRestClient {
             // Handle HTTP errors (4xx, 5xx)
             clientResponse.setStatusCode(ex.getStatusCode());
             clientResponse.setRawBody(ex.getResponseBodyAsString());
-            clientResponse.setSuccess(false);
             clientResponse.setHttpError(true);
             errorMessage = "HTTP Error: " + ex.getStatusCode() + " - " + ex.getStatusText();
 
@@ -122,14 +117,12 @@ public class EnhancedRestClient {
         } catch (ResourceAccessException ex) {
             // Handle connection/timeout errors
             clientResponse.setStatusCode(HttpStatus.SERVICE_UNAVAILABLE);
-            clientResponse.setSuccess(false);
             clientResponse.setConnectionError(true);
             errorMessage = "Connection Error: " + ex.getMessage();
 
         } catch (Exception ex) {
             // Handle any other unexpected errors
             clientResponse.setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
-            clientResponse.setSuccess(false);
             clientResponse.setUnexpectedError(true);
             errorMessage = "Unexpected Error: " + ex.getMessage();
         }
@@ -175,7 +168,7 @@ public class EnhancedRestClient {
             }
         }
 
-        String logLevel = clientResponse.isSuccess() ? "INFO" : "WARN";
+
         String logMessage = String.format("%s [%s: %s] [%s: %s] [%s: %s] [%s: %s] [%s: %s] [%s: %s] [%s: %s]%s",
                 REST_CLIENT,
                 HTTP_METHOD, method.toString(),
@@ -188,11 +181,7 @@ public class EnhancedRestClient {
                 errorMessage != null ? String.format(" [%s: %s]", ERROR_MESSAGE, errorMessage) : ""
         );
 
-        if (clientResponse.isSuccess()) {
-            log.info(logMessage);
-        } else {
-            log.error(logMessage);
-        }
+        log.info(logMessage);
     }
 
     private HttpHeaders buildHeaders(Map<String, String> headers) {

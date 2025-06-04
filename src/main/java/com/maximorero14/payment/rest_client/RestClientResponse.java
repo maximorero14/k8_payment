@@ -16,7 +16,6 @@ public class RestClientResponse<T> {
     private String rawBody;
     private HttpStatusCode statusCode;
     private HttpHeaders headers;
-    private boolean success;
     private long processingTimeMs;
 
     // Error flags
@@ -33,9 +32,6 @@ public class RestClientResponse<T> {
         return statusCode != null && statusCode.is5xxServerError();
     }
 
-    public boolean hasError() {
-        return !success;
-    }
 
     public String getErrorType() {
         if (httpError) return "HTTP_ERROR";
