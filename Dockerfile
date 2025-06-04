@@ -29,4 +29,4 @@ EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "application.jar"]
 
-#docker rm -f k8_auth_container && docker build -t k8_auth . && docker run -p 8080:8080 --name k8_auth_container k8_auth
+#docker rm -f k8_payment_container && docker build -t k8_payment . && docker run -p 8080:8080 --name k8_payment_container k8_payment
