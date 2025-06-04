@@ -51,7 +51,7 @@ public class PaymentController {
 					Map<String, Object> errorResponse = new HashMap<>();
 					errorResponse.put("error", "Service unavailable");
 					errorResponse.put("message", "Payment service is currently unavailable");
-					return ResponseEntity.status(HttpStatus.UNAVAILABLE_FOR_LEGAL_REASONS).body(errorResponse);
+					return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
 
 				} else {
 					PaymentResponse paymentResponse = new PaymentResponse();
