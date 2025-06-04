@@ -6,6 +6,7 @@ import lombok.Data;
 
 @Data
 public class PaymentResponse {
+
     private String id;
     private BigDecimal amount;
     private String currency;

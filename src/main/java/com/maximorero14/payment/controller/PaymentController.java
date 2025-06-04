@@ -43,7 +43,7 @@ public class PaymentController {
 					FraudCheckResponse.class
 			);
 
-			if (!response.isHttpError()) {
+			if (!(response.getStatusCode().is4xxClientError() || response.getStatusCode().is5xxServerError())) {
 				FraudCheckResponse fraudCheckResponse = response.getBody();
 
 				if(fraudCheckResponse.isFraud()){
