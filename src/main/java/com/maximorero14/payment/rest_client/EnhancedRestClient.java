@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.opentelemetry.instrumentation.annotations.WithSpan;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -42,26 +43,31 @@ public class EnhancedRestClient {
         this.objectMapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
     }
 
+    @WithSpan("rest_client_get")
     public <T> RestClientResponse<T> get(String metricName, String url, Map<String, String> headers, Class<T> responseType) {
         HttpEntity<Object> entity = new HttpEntity<>(null, buildHeaders(headers));
         return execute(metricName, url, HttpMethod.GET, entity, responseType);
     }
 
+    @WithSpan("rest_client_post")
     public <T> RestClientResponse<T> post(String metricName, String url, Object request, Map<String, String> headers, Class<T> responseType) {
         HttpEntity<Object> entity = new HttpEntity<>(request, buildHeaders(headers));
         return execute(metricName, url, HttpMethod.POST, entity, responseType);
     }
 
+    @WithSpan("rest_client_patch")
     public <T> RestClientResponse<T> patch(String metricName, String url, Object request, Map<String, String> headers, Class<T> responseType) {
         HttpEntity<Object> entity = new HttpEntity<>(request, buildHeaders(headers));
         return execute(metricName, url, HttpMethod.PATCH, entity, responseType);
     }
 
+    @WithSpan("rest_client_put")
     public <T> RestClientResponse<T> put(String metricName, String url, Object request, Map<String, String> headers, Class<T> responseType) {
         HttpEntity<Object> entity = new HttpEntity<>(request, buildHeaders(headers));
         return execute(metricName, url, HttpMethod.PUT, entity, responseType);
     }
 
+    @WithSpan("rest_client_delete")
     public <T> RestClientResponse<T> delete(String metricName, String url, Map<String, String> headers, Class<T> responseType) {
         HttpEntity<Object> entity = new HttpEntity<>(null, buildHeaders(headers));
         return execute(metricName, url, HttpMethod.DELETE, entity, responseType);

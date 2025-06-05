@@ -1,11 +1,9 @@
 package com.maximorero14.payment.controller;
 
-import com.maximorero14.payment.dto.FraudCheckResponse;
-import com.maximorero14.payment.dto.PaymentRequest;
-import com.maximorero14.payment.dto.PaymentResponse;
-import com.maximorero14.payment.rest_client.EnhancedRestClient;
-import com.maximorero14.payment.rest_client.RestClientResponse;
-import lombok.extern.slf4j.Slf4j;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -15,9 +13,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import com.maximorero14.payment.dto.FraudCheckResponse;
+import com.maximorero14.payment.dto.PaymentRequest;
+import com.maximorero14.payment.dto.PaymentResponse;
+import com.maximorero14.payment.rest_client.EnhancedRestClient;
+import com.maximorero14.payment.rest_client.RestClientResponse;
+import com.maximorero14.payment.service.PaymentService;
+
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/payment")
@@ -27,8 +30,14 @@ public class PaymentController {
 	@Autowired
 	private EnhancedRestClient restClient;
 
+	@Autowired
+	private PaymentService paymentService;
+
+
 	@Value("${services.fraud.url}")
 	private String fraudServiceUrl;
+
+
 
 	@PostMapping("/create")
 	public ResponseEntity<?> createPayment(@RequestBody PaymentRequest paymentRequest) {
@@ -55,12 +64,15 @@ public class PaymentController {
 
 				} else {
 					PaymentResponse paymentResponse = new PaymentResponse();
+			
 
 					paymentResponse.setId(UUID.randomUUID().toString());
 					paymentResponse.setAmount(paymentRequest.getAmount());
 					paymentResponse.setCurrency(paymentRequest.getCurrency());
 					paymentResponse.setMethod(paymentRequest.getMethod());
 					paymentResponse.setUserId(paymentRequest.getUserId());
+        			
+					paymentService.savePayment(paymentRequest);
 
 					return ResponseEntity.status(HttpStatus.CREATED).body(paymentResponse);
 				}
