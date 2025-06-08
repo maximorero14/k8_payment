@@ -14,6 +14,7 @@ import io.nats.client.Dispatcher;
 import io.nats.client.Nats;
 import io.nats.client.Options;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,23 +34,40 @@ public class NatsConsumer {
     @Autowired
     UtilsService utilsService;
 
+    private Connection natsConnection;
+
     @PostConstruct
     public void subscribe() {
         log.info("Subscribing to NATS subject: {} {}", natsUrl, subject);
-        try (Connection natsConnection = Nats.connect(new Options.Builder().server(natsUrl).build())) {
+        try {
+            natsConnection = Nats.connect(new Options.Builder().server(natsUrl).build());
             Dispatcher dispatcher = natsConnection.createDispatcher((msg) -> {
                 try {
                     String json = new String(msg.getData(), StandardCharsets.UTF_8);
                     PaymentRequest paymentRequest = objectMapper.readValue(json, PaymentRequest.class);
                     handlePaymentRequest(paymentRequest);
                 } catch (Exception e) {
-                    log.error("Error subscribing to NATS 111: {} {}", e.getMessage(), utilsService.getStackTraceAsString(e), e);
+                    log.error("Error processing message from NATS: {} {}", e.getMessage(), utilsService.getStackTraceAsString(e), e);
                 }
             });
             dispatcher.subscribe(subject);
+
+            log.info("Successfully subscribed to NATS subject: {}", subject);
         } catch (Exception e) {
-            log.error("Error subscribing to NATS 2222: {} {}", e.getMessage(), utilsService.getStackTraceAsString(e), e);
-            //throw new IllegalStateException("Error subscribing to NATS", e);
+            log.error("Error subscribing to NATS: {} {}", e.getMessage(), utilsService.getStackTraceAsString(e), e);
+            throw new IllegalStateException("Error subscribing to NATS", e);
+        }
+    }
+
+    @PreDestroy
+    public void cleanup() {
+        if (natsConnection != null) {
+            try {
+                natsConnection.close();
+                log.info("NATS connection closed successfully");
+            } catch (Exception e) {
+                log.error("Error closing NATS connection: {}", e.getMessage(), e);
+            }
         }
     }
 
