@@ -2,6 +2,7 @@ package com.maximorero14.payment.service;
 
 import java.nio.charset.StandardCharsets;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -29,8 +30,12 @@ public class NatsConsumer {
     @Value("${nats.subject}")
     private String subject;
 
+    @Autowired
+    UtilsService utilsService;
+
     @PostConstruct
     public void subscribe() {
+        log.info("Subscribing to NATS subject: {} {}", natsUrl, subject);
         try (Connection natsConnection = Nats.connect(new Options.Builder().server(natsUrl).build())) {
             Dispatcher dispatcher = natsConnection.createDispatcher((msg) -> {
                 try {
@@ -38,12 +43,12 @@ public class NatsConsumer {
                     PaymentRequest paymentRequest = objectMapper.readValue(json, PaymentRequest.class);
                     handlePaymentRequest(paymentRequest);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Error subscribing to NATS 111: {} {}", e.getMessage(), utilsService.getStackTraceAsString(e), e);
                 }
             });
             dispatcher.subscribe(subject);
         } catch (Exception e) {
-            log.error("Error subscribing to NATS: " + e.getMessage());
+            log.error("Error subscribing to NATS 2222: {} {}", e.getMessage(), utilsService.getStackTraceAsString(e), e);
             //throw new IllegalStateException("Error subscribing to NATS", e);
         }
     }
