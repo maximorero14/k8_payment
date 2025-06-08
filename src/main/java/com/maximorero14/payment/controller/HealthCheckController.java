@@ -26,7 +26,7 @@ public class HealthCheckController {
         String podName = System.getenv("POD_NAME");
     
 
-        response.put("message", "pong_k8_auth");
+        response.put("message", "pong_k8_payment_v2");
         response.put("version", version != null ? version : "unknown");
         response.put("pod", podName != null ? podName : "unknown");
 		
@@ -51,6 +51,6 @@ public class HealthCheckController {
 	@GetMapping("/health")
 	public ResponseEntity<String> health() {
 		log.info("[log_name: health]");
-		return new ResponseEntity<>("ok_k8_auth_v2", HttpStatus.OK);
+		return new ResponseEntity<>("ok_k8_payment_v2", HttpStatus.OK);
 	}
 }
