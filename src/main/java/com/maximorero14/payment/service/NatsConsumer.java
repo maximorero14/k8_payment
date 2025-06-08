@@ -55,7 +55,7 @@ public class NatsConsumer {
             log.info("Successfully subscribed to NATS subject: {}", subject);
         } catch (Exception e) {
             log.error("Error subscribing to NATS: {} {}", e.getMessage(), utilsService.getStackTraceAsString(e), e);
-            throw new IllegalStateException("Error subscribing to NATS", e);
+            //throw new IllegalStateException("Error subscribing to NATS", e);
         }
     }
 
