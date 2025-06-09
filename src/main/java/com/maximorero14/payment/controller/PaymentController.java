@@ -2,7 +2,6 @@ package com.maximorero14.payment.controller;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.maximorero14.payment.dto.FraudCheckResponse;
 import com.maximorero14.payment.dto.PaymentRequest;
-import com.maximorero14.payment.dto.PaymentResponse;
 import com.maximorero14.payment.rest_client.EnhancedRestClient;
 import com.maximorero14.payment.rest_client.RestClientResponse;
 import com.maximorero14.payment.service.PaymentService;
@@ -41,46 +39,8 @@ public class PaymentController {
 
 	@PostMapping("/create")
 	public ResponseEntity<?> createPayment(@RequestBody PaymentRequest paymentRequest) {
-		String metricName = "create_payment";
-
 		try {
-			RestClientResponse<FraudCheckResponse> response = restClient.post(
-					metricName,
-					fraudServiceUrl+"/fraud/check",
-					paymentRequest,
-					Map.of("Content-Type", "application/json"),
-					FraudCheckResponse.class
-			);
-
-			if (!(response.getStatusCode().is4xxClientError() || response.getStatusCode().is5xxServerError())) {
-				FraudCheckResponse fraudCheckResponse = response.getBody();
-
-				if(fraudCheckResponse.isFraud()){
-
-					Map<String, Object> errorResponse = new HashMap<>();
-					errorResponse.put("error", "Service unavailable");
-					errorResponse.put("message", "Payment service is currently unavailable");
-					return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
-
-				} else {
-					PaymentResponse paymentResponse = new PaymentResponse();
-			
-
-					paymentResponse.setId(UUID.randomUUID().toString());
-					paymentResponse.setAmount(paymentRequest.getAmount());
-					paymentResponse.setCurrency(paymentRequest.getCurrency());
-					paymentResponse.setMethod(paymentRequest.getMethod());
-					paymentResponse.setUserId(paymentRequest.getUserId());
-        			
-					paymentService.savePayment(paymentRequest);
-
-					return ResponseEntity.status(HttpStatus.CREATED).body(paymentResponse);
-				}
-
-			} else {
-				return handleErrorResponse(response);
-			}
-
+			return paymentService.processPayment(paymentRequest);
 		} catch (Exception e) {
 			log.error("Unexpected error in createPayment: {}", e.getMessage(), e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Console appender con JSON estructurado -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSXXX</pattern>
+                </timestamp>
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+                <message>
+                    <fieldName>message</fieldName>
+                </message>
+                <stackTrace>
+                    <fieldName>stack_trace</fieldName>
+                </stackTrace>
+                <mdc/>
+                
+                <pattern>
+                    <pattern>
+                        {
+                            "labels": {
+                                "app": "k8_payment",
+                                "level": "%level",
+                                "endpoint": "%X{endpoint:-unknown}",
+                                "status_class": "%X{httpStatusClass:-unknown}"
+                            }
+                        }
+                    </pattern>
+                </pattern>
+                <pattern>
+                    <pattern>
+                        {
+                            "trace_id": "%X{traceId:-}",
+                            "span_id": "%X{spanId:-}",
+                            "user_id": "%X{userId:-}",
+                            "request_id": "%X{requestId:-}",
+                            "http_status": "%X{httpStatus:-}",
+                            "duration_ms": "%X{durationMs:-}",
+                            "client_ip": "%X{clientIp:-}",
+                            "user_agent": "%X{userAgent:-}",
+                            "http_method": "%X{httpMethod:-}"
+                        }
+                    </pattern>
+                </pattern>
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- Configuración de loggers específicos -->
+    <logger name="org.springframework" level="WARN"/>
+    <logger name="org.apache" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
+
+    <!-- Root logger -->
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>

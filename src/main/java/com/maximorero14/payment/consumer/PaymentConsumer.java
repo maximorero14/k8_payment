@@ -1,6 +1,5 @@
 package com.maximorero14.payment.consumer;
 
-
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
@@ -12,11 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.maximorero14.payment.dto.PaymentRequest;
+import com.maximorero14.payment.service.PaymentService;
 import com.maximorero14.payment.service.UtilsService;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-
 
 @Service
 @Slf4j
@@ -29,7 +30,12 @@ public class PaymentConsumer {
     private String topic;
 
     @Autowired
-    UtilsService utilsService;
+    private UtilsService utilsService;
+
+    @Autowired
+    private PaymentService paymentService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper(); // Para deserializar el JSON
 
     @PostConstruct
     public void start() {
@@ -47,14 +53,21 @@ public class PaymentConsumer {
                 c.subscribe(Collections.singletonList(topic));
 
                 while (true) {
-                    for (ConsumerRecord<String, String> rec :
-                         c.poll(Duration.ofMillis(100))) {
+                    for (ConsumerRecord<String, String> rec : c.poll(Duration.ofMillis(100))) {
                         try {
-                            System.out.printf("Mensaje recibido: %s%n", rec.value());
-                            c.commitSync();          // confirmamos sólo si fue OK
+                            log.info("Mensaje recibido: {}", rec.value());
+
+                            // Convertir el mensaje en un objeto PaymentRequest
+                            PaymentRequest paymentRequest = objectMapper.readValue(rec.value(), PaymentRequest.class);
+
+                            // Llamar al servicio de pago
+                            paymentService.processPayment(paymentRequest);
+
+                            // Confirmar el mensaje solo si fue procesado correctamente
+                            c.commitSync();
                         } catch (Exception ex) {
-                            System.err.printf("Fallo procesando: %s%n", ex.getMessage());
-                            // no commit => se reentregará
+                            log.error("Fallo procesando el mensaje: {}", ex.getMessage(), ex);
+                            // No se confirma el commit para que el mensaje se reentregue
                         }
                     }
                 }
@@ -63,5 +76,4 @@ public class PaymentConsumer {
             }
         }, "kafka-consumer").start();
     }
-
 }
