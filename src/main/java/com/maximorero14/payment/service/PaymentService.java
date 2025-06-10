@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import com.maximorero14.payment.dto.FraudCheckResponse;
 import com.maximorero14.payment.dto.PaymentRequest;
 import com.maximorero14.payment.dto.PaymentResponse;
+import com.maximorero14.payment.entity.Payment;
+import com.maximorero14.payment.repository.PaymentRepository;
 import com.maximorero14.payment.rest_client.EnhancedRestClient;
 import com.maximorero14.payment.rest_client.RestClientResponse;
 
@@ -34,6 +37,9 @@ public class PaymentService {
     private String fraudServiceUrl;
 
     private final EnhancedRestClient restClient;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
 
     public PaymentService(EnhancedRestClient restClient) {
         this.restClient = restClient;
@@ -56,19 +62,23 @@ public class PaymentService {
                 FraudCheckResponse fraudCheckResponse = response.getBody();
 
                 if (fraudCheckResponse.isFraud()) {
+                    // Si es fraude, guardar con estado REJECT
+                    savePayment(paymentRequest, true, "REJECT");
+
                     Map<String, Object> errorResponse = new HashMap<>();
                     errorResponse.put("error", "Service unavailable");
                     errorResponse.put("message", "Payment service is currently unavailable");
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
                 } else {
+                    // Si no es fraude, guardar con estado APPROVED
+                    savePayment(paymentRequest, false, "APPROVED");
+
                     PaymentResponse paymentResponse = new PaymentResponse();
                     paymentResponse.setId(UUID.randomUUID().toString());
                     paymentResponse.setAmount(paymentRequest.getAmount());
                     paymentResponse.setCurrency(paymentRequest.getCurrency());
                     paymentResponse.setMethod(paymentRequest.getMethod());
                     paymentResponse.setUserId(paymentRequest.getUserId());
-
-                    savePayment(paymentRequest);
 
                     return ResponseEntity.status(HttpStatus.CREATED).body(paymentResponse);
                 }
@@ -121,17 +131,30 @@ public class PaymentService {
         }
     }
 
-    public void savePayment(PaymentRequest paymentRequest) {
+    public void savePayment(PaymentRequest paymentRequest, boolean isFraud, String status) {
         try {
-            // Simula un retraso aleatorio entre 500ms y 1000ms
-            int delay = 500 + random.nextInt(501); // 500ms a 1000ms
+            Payment payment = new Payment();
+            payment.setId(UUID.randomUUID().toString());
+            payment.setAmount(paymentRequest.getAmount());
+            payment.setCurrency(paymentRequest.getCurrency());
+            payment.setMethod(paymentRequest.getMethod());
+            payment.setUserId(paymentRequest.getUserId());
+            payment.setIsFraud(isFraud); // Asignar si es fraude
+            payment.setStatus(status);   // Asignar el estado
+
+            paymentRepository.save(payment);
+            log.info("Payment saved to database: {}", payment);
+
+            // Introduce un retraso aleatorio entre 1 y 5 segundos
+            int delay = random.nextInt(4000) + 1000; // Genera un número entre 1000 y 5000 ms
+            log.info("Simulating delay of {} ms", delay);
             Thread.sleep(delay);
 
-            // Simula el guardado en la base de datos
-            log.info("Payment saved: {}", paymentRequest);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.error("Error during save simulation: {}", e.getMessage());
+            log.error("Thread interrupted during delay: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("Error saving payment to database: {}", e.getMessage(), e);
         }
     }
 }
