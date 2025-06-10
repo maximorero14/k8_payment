@@ -2,6 +2,7 @@ package com.maximorero14.payment.service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.UUID;
 
@@ -155,6 +156,22 @@ public class PaymentService {
             log.error("Thread interrupted during delay: {}", e.getMessage(), e);
         } catch (Exception e) {
             log.error("Error saving payment to database: {}", e.getMessage(), e);
+        }
+    }
+
+    public ResponseEntity<?> getPaymentById(String id) {
+        try {
+            Optional<Payment> paymentOptional = paymentRepository.findById(id);
+            if (paymentOptional.isPresent()) {
+                return ResponseEntity.ok(paymentOptional.get());
+            } else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("error", "Payment not found", "message", "No payment found with the given ID"));
+            }
+        } catch (Exception e) {
+            log.error("Unexpected error in getPaymentById: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Internal server error", "message", "An unexpected error occurred"));
         }
     }
 }
