@@ -34,7 +34,9 @@ ENV OTEL_INSTRUMENTATION_RESTTEMPLATE_ENABLED=true
 ENV OTEL_INSTRUMENTATION_APACHE_HTTPCLIENT_ENABLED=true
 ENV OTEL_PROPAGATORS=tracecontext,baggage,b3multi
 ENV OTEL_LOGS_EXPORTER=none
-ENV OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector-opentelemetry-collector.monitoring.svc.cluster.local:4318/v1/traces
+ENV OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4318/v1/traces
+
+ENV OTEL_METRICS_EXPORTER=none
 
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 RUN chown appuser:appgroup /app/opentelemetry-javaagent.jar
